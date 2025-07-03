@@ -18,7 +18,7 @@ from ap import apply_patch_to_repo
 
 # ------------------ 配置区域（相对项目根目录） ------------------
 DATASET_PATH   = Path('data/swe-smith.jsonl')
-REPOS_ROOT     = Path('repo')
+REPOS_ROOT     = Path('./repo')
 INSTANCE_ID    = 'scanny__python-pptx.278b47b1.combine_file__00zilcc6'
 UV_ENV_NAME    = 'pptx'
 # ----------------------------------------------------------------
