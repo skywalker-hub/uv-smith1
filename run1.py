@@ -34,7 +34,7 @@ def ensure_local_dataset(path: Path) -> None:
         with path.open("w", encoding="utf-8") as f:
             for item in ds:
                 f.write(json.dumps(item, ensure_ascii=False) + "\n")
-        print("✅ 数据集下载完成。")
+        print("数据集下载完成。")
 
 def load_instance(dataset_path: Path, instance_id: str) -> dict:
     """从 JSONL 数据集中加载对应 instance_id 的记录"""
@@ -65,7 +65,7 @@ def main():
         if not apply_patch_to_repo(repo_dir, error_patch, env_dir=env_dir, reverse=False):
             raise RuntimeError('注入错误补丁失败')
 
-        print("✅ 错误补丁已成功应用，测试部分暂未执行。")
+        print("错误补丁已成功应用，测试部分暂未执行。")
 
     except Exception as e:
         print(f'Error: {e}', file=sys.stderr)
