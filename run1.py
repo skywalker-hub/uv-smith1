@@ -52,7 +52,11 @@ def main():
         item = load_instance(DATASET_PATH, INSTANCE_ID)
 
         # 2. 确定仓库路径并创建虚拟环境
-        repo_dir = REPOS_ROOT / item['repo'].replace('/', '__')
+        # 处理带前缀的 repo 字段，如 "swesmith__scanny__python-pptx.278b47b1"
+        full_id = item["instance_id"].split('.')[0]  # 提取 "swesmith__scanny__python-pptx"
+        repo_name = '__'.join(full_id.split('__')[1:])  # 去掉 "swesmith__"
+        repo_dir = REPOS_ROOT / repo_name
+
         env_dir = setup_environment(UV_ENV_NAME)
 
         # 3. 注入错误补丁
