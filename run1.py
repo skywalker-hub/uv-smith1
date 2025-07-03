@@ -23,17 +23,28 @@ INSTANCE_ID    = 'scanny__python-pptx.278b47b1.combine_file__00zilcc6'
 UV_ENV_NAME    = 'pptx'
 # ----------------------------------------------------------------
 
+# 尝试从本地加载数据集，若不存在则从 Hugging Face 下载并保存为本地 JSONL
+from datasets import load_dataset
+
+def ensure_local_dataset(path: Path) -> None:
+    if not path.exists():
+        print(f"未找到本地数据集，正在从 Hugging Face 下载 SWE-smith 并保存到 {path}...")
+        ds = load_dataset("SWE-bench/SWE-smith", split="train")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("w", encoding="utf-8") as f:
+            for item in ds:
+                f.write(json.dumps(item, ensure_ascii=False) + "\n")
+        print("✅ 数据集下载完成。")
+
 def load_instance(dataset_path: Path, instance_id: str) -> dict:
     """从 JSONL 数据集中加载对应 instance_id 的记录"""
-    if not dataset_path.exists():
-        raise FileNotFoundError(f"数据集文件不存在: {dataset_path}")
+    ensure_local_dataset(dataset_path)
     with dataset_path.open(encoding='utf-8') as f:
         for line in f:
             item = json.loads(line)
             if item.get('instance_id') == instance_id:
                 return item
     raise KeyError(f'Instance {instance_id} not found')
-
 
 def main():
     try:
