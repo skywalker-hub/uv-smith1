@@ -7,7 +7,7 @@ run_eval.py — 主控程序：
   2. ap.py     —— 补丁应用
   3. test.py   —— 测试运行与验证
 
-直接在脚本顶部通过常量配置 paths，无需命令行参数。
+脚本顶部通过常量配置相对路径，无需命令行参数。
 """
 from pathlib import Path
 import json
@@ -18,16 +18,23 @@ from uv_env import setup_environment
 from ap import apply_patch_to_repo
 from test import run_tests_on_repo
 
-# 配置区域：请根据本地环境修改
-DATASET_PATH   = Path('/path/to/swe-smith.jsonl')
-REPOS_ROOT     = Path('/path/to/repos')
+# ------------------ 配置区域（相对项目根目录） ------------------
+# SWE-smith 数据集 JSONL 文件，相对脚本所在目录
+DATASET_PATH   = Path('swe-smith.jsonl')
+# 本地克隆的仓库根目录，相对项目根目录
+REPOS_ROOT     = Path('repos')
+# 要验证的实例 ID
 INSTANCE_ID    = 'owner__repo.bugtype.hash'
-FIX_PATCH_FILE = Path('/path/to/your_fix.patch')
+# 用户自制修复补丁文件（.patch/.diff），相对项目根目录
+FIX_PATCH_FILE = Path('fixes/your_fix.patch')
+# 虚拟环境名称，对应 uv_env.py 中 ENV_BASE_DIR 下的子目录名
 UV_ENV_NAME    = 'myenv'
-# ---------------------------------------------
+# ----------------------------------------------------------------
 
 def load_instance(dataset_path: Path, instance_id: str) -> dict:
     """从 JSONL 数据集中加载对应 instance_id 的记录"""
+    if not dataset_path.exists():
+        raise FileNotFoundError(f"数据集文件不存在: {dataset_path}")
     with dataset_path.open(encoding='utf-8') as f:
         for line in f:
             item = json.loads(line)
@@ -42,27 +49,28 @@ def main():
         item = load_instance(DATASET_PATH, INSTANCE_ID)
 
         # 2. 确定仓库路径并创建虚拟环境
+        # repo 字段类似 'owner/repo'
         repo_dir = REPOS_ROOT / item['repo'].replace('/', '__')
         env_dir = setup_environment(repo_dir, UV_ENV_NAME)
 
-        # 3. 注入错误补丁，使原本通过的测试失败
+        # 3. 注入错误补丁
         error_patch = item['patch']
         if not apply_patch_to_repo(repo_dir, error_patch, uv_env=UV_ENV_NAME, reverse=False):
-            raise RuntimeError('Error patch apply failed')
+            raise RuntimeError('注入错误补丁失败')
 
         # 4. 首次验证：FAIL_TO_PASS 应失败，PASS_TO_PASS 应通过
         fail_tests = item.get('FAIL_TO_PASS', [])
         pass_tests = item.get('PASS_TO_PASS', [])
-        initial_fail = run_tests_on_repo(repo_dir, fail_tests, expect_fail=True, uv_env=UV_ENV_NAME)
-        initial_pass = run_tests_on_repo(repo_dir, pass_tests, expect_fail=False, uv_env=UV_ENV_NAME)
+        initial_fail = run_tests_on_repo(repo_dir, fail_tests,   expect_fail=True,  uv_env_name=UV_ENV_NAME)
+        initial_pass = run_tests_on_repo(repo_dir, pass_tests,   expect_fail=False, uv_env_name=UV_ENV_NAME)
 
-        # 5. 应用用户修复补丁（修复即会还原错误）
+        # 5. 应用用户修复补丁
         fix_patch = FIX_PATCH_FILE.read_text(encoding='utf-8')
         if not apply_patch_to_repo(repo_dir, fix_patch, uv_env=UV_ENV_NAME, reverse=False):
-            raise RuntimeError('Fix patch apply failed')
+            raise RuntimeError('应用修复补丁失败')
 
-        # 6. 复测 FAIL_TO_PASS，期待全部恢复通过
-        repair_results = run_tests_on_repo(repo_dir, fail_tests, expect_fail=False, uv_env=UV_ENV_NAME)
+        # 6. 复测 FAIL_TO_PASS
+        repair_results = run_tests_on_repo(repo_dir, fail_tests, expect_fail=False, uv_env_name=UV_ENV_NAME)
 
         # 7. 汇总并输出
         summary = {
