@@ -19,15 +19,10 @@ from ap import apply_patch_to_repo
 from test import run_tests_on_repo
 
 # ------------------ 配置区域（相对项目根目录） ------------------
-# SWE-smith 数据集 JSONL 文件，相对脚本所在目录
-DATASET_PATH   = Path('swe-smith.jsonl')
-# 本地克隆的仓库根目录，相对项目根目录
+DATASET_PATH   = Path('data/swe-smith.jsonl')
 REPOS_ROOT     = Path('repos')
-# 要验证的实例 ID
-INSTANCE_ID    = 'owner__repo.bugtype.hash'
-# 用户自制修复补丁文件（.patch/.diff），相对项目根目录
+INSTANCE_ID    = 'scanny__python-pptx.278b47b1.combine_file__00zilcc6'
 FIX_PATCH_FILE = Path('fixes/your_fix.patch')
-# 虚拟环境名称，对应 uv_env.py 中 ENV_BASE_DIR 下的子目录名
 UV_ENV_NAME    = 'myenv'
 # ----------------------------------------------------------------
 
@@ -49,28 +44,27 @@ def main():
         item = load_instance(DATASET_PATH, INSTANCE_ID)
 
         # 2. 确定仓库路径并创建虚拟环境
-        # repo 字段类似 'owner/repo'
         repo_dir = REPOS_ROOT / item['repo'].replace('/', '__')
-        env_dir = setup_environment(repo_dir, UV_ENV_NAME)
+        env_dir = setup_environment(UV_ENV_NAME)
 
         # 3. 注入错误补丁
         error_patch = item['patch']
-        if not apply_patch_to_repo(repo_dir, error_patch, uv_env=UV_ENV_NAME, reverse=False):
+        if not apply_patch_to_repo(repo_dir, error_patch, env_dir=env_dir, reverse=False):
             raise RuntimeError('注入错误补丁失败')
 
         # 4. 首次验证：FAIL_TO_PASS 应失败，PASS_TO_PASS 应通过
         fail_tests = item.get('FAIL_TO_PASS', [])
         pass_tests = item.get('PASS_TO_PASS', [])
-        initial_fail = run_tests_on_repo(repo_dir, fail_tests,   expect_fail=True,  uv_env_name=UV_ENV_NAME)
-        initial_pass = run_tests_on_repo(repo_dir, pass_tests,   expect_fail=False, uv_env_name=UV_ENV_NAME)
+        initial_fail = run_tests_on_repo(repo_dir, fail_tests, expect_fail=True, env_dir=env_dir)
+        initial_pass = run_tests_on_repo(repo_dir, pass_tests, expect_fail=False, env_dir=env_dir)
 
         # 5. 应用用户修复补丁
         fix_patch = FIX_PATCH_FILE.read_text(encoding='utf-8')
-        if not apply_patch_to_repo(repo_dir, fix_patch, uv_env=UV_ENV_NAME, reverse=False):
+        if not apply_patch_to_repo(repo_dir, fix_patch, env_dir=env_dir, reverse=False):
             raise RuntimeError('应用修复补丁失败')
 
         # 6. 复测 FAIL_TO_PASS
-        repair_results = run_tests_on_repo(repo_dir, fail_tests, expect_fail=False, uv_env_name=UV_ENV_NAME)
+        repair_results = run_tests_on_repo(repo_dir, fail_tests, expect_fail=False, env_dir=env_dir)
 
         # 7. 汇总并输出
         summary = {

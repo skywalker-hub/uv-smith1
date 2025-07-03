@@ -31,7 +31,7 @@ REQ_FILE_PATH = Path('/path/to/requirements.txt')
 # ----------------------------------
 
 
-def setup_environment(repo_dir: Path, uv_env_name: str) -> Path:
+def setup_environment(uv_env_name: str) -> Path:
     """
     在 ENV_BASE_DIR 下创建名为 uv_env_name 的 uv 虚拟环境，
     并使用 REQ_FILE_PATH 安装依赖。如果依赖文件不存在，
