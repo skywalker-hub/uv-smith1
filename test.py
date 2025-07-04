@@ -56,7 +56,7 @@ def run_tests_on_repo(
         log_file = log_dir / f"{nodeid.replace('::', '__').replace('[','_').replace(']','')}.log"
         log_file.parent.mkdir(parents=True, exist_ok=True)  # ✅ 添加这行解决路径不存在问题
 
-        cmd = f"source ~/autodl-tmp/uv-smith1/{env_dir}/bin/activate && pytest -q --disable-warnings --maxfail=1 {nodeid}"
+        cmd = f"source ~/autodl-tmp/uv-smith1/{env_dir}/bin/activate && pytest {nodeid}"
         proc = subprocess.run(
             cmd,
             shell=True,
