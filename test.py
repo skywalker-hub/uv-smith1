@@ -52,7 +52,9 @@ def run_tests_on_repo(
 
     results: dict[str, bool] = {}
     for nodeid in _normalize_tests(tests):
+        # 生成日志路径并确保目录存在
         log_file = log_dir / f"{nodeid.replace('::', '__').replace('[','_').replace(']','')}.log"
+        log_file.parent.mkdir(parents=True, exist_ok=True)  # ✅ 添加这行解决路径不存在问题
 
         cmd = f"source {env_dir}/bin/activate && pytest -q --disable-warnings --maxfail=1 {nodeid}"
         proc = subprocess.run(
