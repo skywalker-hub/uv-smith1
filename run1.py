@@ -23,7 +23,7 @@ from test import run_tests_on_repo
 DATASET_PATH   = Path('data/swe-smith.jsonl')
 REPOS_ROOT     = Path('repos')
 INSTANCE_ID    = 'scanny__python-pptx.278b47b1.combine_file__00zilcc6'
-FIX_PATCH_FILE = Path('fixes/your_fix.patch')
+#FIX_PATCH_FILE = Path('fixes/your_fix.patch')
 UV_ENV_NAME    = 'pptx'
 # ----------------------------------------------------------------
 
