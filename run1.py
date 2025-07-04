@@ -51,7 +51,7 @@ def switch_to_commit(repo_dir: Path, base_commit: str) -> None:
     """
     print(f"切换到 base commit: {base_commit}")
     subprocess.run(["git", "reset", "--hard", base_commit], cwd=repo_dir, check=True)  # 重置当前工作区
-    
+    subprocess.run(["git", "checkout", base_commit], cwd=repo_dir, check=True)  # 切换到 commit
 
 def main():
     try:
@@ -62,15 +62,17 @@ def main():
         base_commit = extract_base_commit(INSTANCE_ID)
         print(f"提取的 base_commit: {base_commit}")
 
-        # 3. 确定仓库路径并创建虚拟环境
+        # 3. 确定仓库路径
         repo_path = item['repo'].removeprefix('swesmith/')
         repo_dir = REPOS_ROOT / repo_path
-        env_dir = setup_environment(UV_ENV_NAME)
 
-        # 4. 切换到指定的 commit
+        # 4. 切换到指定的 commit（确保是基于正确代码版本）
         switch_to_commit(repo_dir, base_commit)
 
-        # 5. 注入错误补丁
+        # 5. 创建虚拟环境
+        env_dir = setup_environment(UV_ENV_NAME)
+
+        # 6. 注入错误补丁
         error_patch = item['patch']
         if not apply_patch_to_repo(repo_dir, error_patch, env_dir=env_dir, reverse=False):
             raise RuntimeError('注入错误补丁失败')
