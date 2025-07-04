@@ -36,7 +36,7 @@ GIT_APPLY_COMMANDS = [
     "patch --batch --fuzz=5 -p1 -i"
 ]
 
-def apply_patch_to_repo(repo_dir: Path, patch_content: str, uv_env_name: str, reverse: bool = False) -> bool:
+def apply_patch_to_repo(repo_dir: Path, patch_content: str,  reverse: bool = False) -> bool:
     """
     在 repo_dir 中依次尝试使用多种命令应用补丁。
     成功则打印中文提示并返回 True，否则打印失败提示并返回 False。
@@ -46,10 +46,7 @@ def apply_patch_to_repo(repo_dir: Path, patch_content: str, uv_env_name: str, re
     if not repo_dir.is_dir():
         raise FileNotFoundError(f"仓库目录未找到: {repo_dir}")
 
-    # 虚拟环境路径
-    env_dir = Path(ENV_BASE_DIR) / uv_env_name
-    if not env_dir.exists():
-        raise FileNotFoundError(f"虚拟环境未找到: {env_dir}")
+
 
     # 写入临时补丁文件
     with tempfile.NamedTemporaryFile('w', delete=False, suffix='.diff') as tf:
