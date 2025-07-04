@@ -88,10 +88,10 @@ def main():
         env_dir = setup_environment(UV_ENV_NAME)
 
         # 7. 注入错误补丁
-        error_patch = item['patch']
-        if not apply_patch_to_repo(repo_dir, error_patch, env_dir, reverse=False):
-            raise RuntimeError('注入错误补丁失败')
-        print("✅ 错误补丁已成功应用。")
+        #error_patch = item['patch']
+        #if not apply_patch_to_repo(repo_dir, error_patch, env_dir, reverse=False):
+            #raise RuntimeError('注入错误补丁失败')
+        #print("✅ 错误补丁已成功应用。")
 
         # 8. 运行 FAIL_TO_PASS（应失败）
         fail_tests = parse_test_list(item.get('FAIL_TO_PASS', []))
