@@ -65,7 +65,7 @@ def apply_patch_to_repo(repo_dir: Path, patch_content: str, env_dir: Path, rever
     try:
         # 依次尝试应用补丁
         for cmd in GIT_APPLY_COMMANDS:
-            full_cmd = f"source {env_dir}/bin/activate && {cmd} {temp_file}"
+            full_cmd = f"source ~/autodl-tmp/uv-smith1/{env_dir}/bin/activate && {cmd} {temp_file}"
             if reverse:
                 full_cmd += " --reverse"
             result = subprocess.run(
