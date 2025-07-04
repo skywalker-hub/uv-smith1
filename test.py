@@ -42,10 +42,10 @@ def run_tests_on_repo(
     """
     repo_dir = Path(repo_dir)
     if not repo_dir.is_dir():
-        raise FileNotFoundError(f"仓库目录未找到: {repo_dir}")
-
+        raise FileNotFoundError(f"❌ 仓库目录未找到: {repo_dir}")
+    
     if not env_dir.exists():
-        raise FileNotFoundError(f"虚拟环境未找到: {env_dir}")
+        raise FileNotFoundError(f"❌ 虚拟环境未找到: {env_dir}")
 
     log_dir = repo_dir / ".test_logs"
     log_dir.mkdir(exist_ok=True)
@@ -54,37 +54,48 @@ def run_tests_on_repo(
     for nodeid in _normalize_tests(tests):
         # 生成日志路径并确保目录存在
         log_file = log_dir / f"{nodeid.replace('::', '__').replace('[','_').replace(']','')}.log"
-        log_file.parent.mkdir(parents=True, exist_ok=True)  # ✅ 添加这行解决路径不存在问题
+        log_file.parent.mkdir(parents=True, exist_ok=True)  # 创建日志目录（如果不存在）
 
         cmd = f"source ~/autodl-tmp/uv-smith1/{env_dir}/bin/activate && pytest -q --disable-warnings --maxfail=1 {nodeid}"
-        proc = subprocess.run(
-            cmd,
-            shell=True,
-            cwd=str(repo_dir),
-            executable="/bin/bash",
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
+        print(f"🎯 执行命令：{cmd}")  # 显示当前运行的命令
 
-        passed = (proc.returncode != 0) if expect_fail else (proc.returncode == 0)
-        status = '失败' if expect_fail else '通过'
+        try:
+            proc = subprocess.run(
+                cmd,
+                shell=True,
+                cwd=str(repo_dir),
+                executable="/bin/bash",
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
 
-        # 打印结果提示
-        if passed:
-            print(f"✅ 测试 '{nodeid}' 符合预期（{status}）。")
-        else:
-            print(f"❌ 测试 '{nodeid}' 未达预期（未{status}）。")
-            print(f"   ↪ 错误码: {proc.returncode}")
-            print(f"   ↪ stderr: {proc.stderr.strip()[:300]}{'...' if len(proc.stderr) > 300 else ''}")
+            # 如果测试期望失败时，返回码不为 0 时算通过
+            passed = (proc.returncode != 0) if expect_fail else (proc.returncode == 0)
+            status = '失败' if expect_fail else '通过'
 
-        # 保存日志
-        with log_file.open("w", encoding="utf-8") as f:
-            f.write(f"=== COMMAND ===\n{cmd}\n\n")
-            f.write(f"=== STDOUT ===\n{proc.stdout}\n\n")
-            f.write(f"=== STDERR ===\n{proc.stderr}\n")
+            # 打印结果提示
+            if passed:
+                print(f"✅ 测试 '{nodeid}' 符合预期（{status}）。")
+            else:
+                print(f"❌ 测试 '{nodeid}' 未达预期（未{status}）。")
+                print(f"   ↪ 错误码: {proc.returncode}")
+                print(f"   ↪ stderr: {proc.stderr.strip()[:300]}{'...' if len(proc.stderr) > 300 else ''}")
 
+            # 保存日志
+            with log_file.open("w", encoding="utf-8") as f:
+                f.write(f"=== COMMAND ===\n{cmd}\n\n")
+                f.write(f"=== STDOUT ===\n{proc.stdout}\n\n")
+                f.write(f"=== STDERR ===\n{proc.stderr}\n")
+            
+        except subprocess.CalledProcessError as e:
+            print(f"❌ 命令执行失败：{e}")
+            with log_file.open("w", encoding="utf-8") as f:
+                f.write(f"=== ERROR ===\n{e}\n")
+        
+        # 如果没有出错，记录测试结果
         results[nodeid] = passed
+
     return results
 
 
@@ -97,10 +108,15 @@ if __name__ == '__main__':
     parser.add_argument('--env_dir',     required=True, type=Path, help='虚拟环境路径')
     args = parser.parse_args()
 
-    res = run_tests_on_repo(
-        args.repo_dir,
-        args.tests,
-        expect_fail=args.expect_fail,
-        env_dir=args.env_dir
-    )
-    print(res)
+    try:
+        res = run_tests_on_repo(
+            args.repo_dir,
+            args.tests,
+            expect_fail=args.expect_fail,
+            env_dir=args.env_dir
+        )
+        print("\n🎯 测试结果：")
+        print(res)
+    except Exception as e:
+        print(f"❌ 运行时发生错误: {e}", file=sys.stderr)
+        sys.exit(1)
