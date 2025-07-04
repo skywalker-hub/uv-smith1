@@ -50,8 +50,8 @@ def switch_to_commit(repo_dir: Path, base_commit: str) -> None:
     切换到指定的 commit
     """
     print(f"切换到 base commit: {base_commit}")
-    subprocess.run(["git", "reset", "--hard"], cwd=repo_dir, check=True)  # 重置当前工作区
-    subprocess.run(["git", "checkout", base_commit], cwd=repo_dir, check=True)  # 切换到 commit
+    subprocess.run(["git", "reset", "--hard", base_commit], cwd=repo_dir, check=True)  # 重置当前工作区
+    
 
 def main():
     try:
