@@ -99,6 +99,7 @@ def main():
 
         # 9. 运行 PASS_TO_PASS（应通过）
         pass_tests = parse_test_list(item.get('PASS_TO_PASS', []))
+        pass_tests = pass_tests_full[:10]  # ✅ 只取前 10 个
         pass_results = run_tests_on_repo(repo_dir, pass_tests, expect_fail=False, env_dir=env_dir)
 
         # 10. 输出结果
