@@ -21,7 +21,7 @@ from test import run_tests_on_repo
 
 # ------------------ 配置区域（相对项目根目录） ------------------
 DATASET_PATH   = Path('data/swe-smith.jsonl')
-REPOS_ROOT     = Path('repo')
+REPOS_ROOT     = Path('repos')
 INSTANCE_ID    = 'scanny__python-pptx.278b47b1.combine_file__00zilcc6'
 #FIX_PATCH_FILE = Path('fixes/your_fix.patch')
 UV_ENV_NAME    = 'pptx'
@@ -44,6 +44,14 @@ def extract_base_commit(instance_id: str) -> str:
     格式为：repo_name.commit_hash，例如：'278b47b1'
     """
     return instance_id.split('.')[1]
+
+def extract_repo(instance_id: str) -> str:
+    """
+    从 instance_id 中提取 repo 名称
+    格式为：repo_name.commit_hash，例如：'python-pptx'
+    """
+    repo_full = instance_id.split('.')[0]
+    return repo_full.split("__")[-1]
 
 def switch_to_commit(repo_dir: Path, base_commit: str) -> None:
     """
@@ -71,13 +79,14 @@ def main():
         # 1. 加载任务实例
         item = load_instance(DATASET_PATH, INSTANCE_ID)
 
-        # 2. 提取 base_commit
+        # 2. 提取 repo 和 base_commit
+        repo_name = extract_repo(INSTANCE_ID)
         base_commit = extract_base_commit(INSTANCE_ID)
+        print(f"提取的 repo: {repo_name}")
         print(f"提取的 base_commit: {base_commit}")
 
         # 3. 确定仓库路径
-        repo_path = item['repo'].removeprefix('swesmith/')
-        repo_dir = REPOS_ROOT / repo_path
+        repo_dir = REPOS_ROOT / repo_name
 
         # 4. 切换到指定的 commit（确保是基于正确代码版本）
         switch_to_commit(repo_dir, base_commit)
