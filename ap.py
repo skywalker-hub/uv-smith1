@@ -36,20 +36,18 @@ GIT_APPLY_COMMANDS = [
     "patch --batch --fuzz=5 -p1 -i"
 ]
 
-def apply_patch_to_repo(
-    repo_dir: Path,
-    patch_content: str,
-    env_dir: Path,
-    reverse: bool = False
-) -> bool:
+def apply_patch_to_repo(repo_dir: Path, patch_content: str, uv_env_name: str, reverse: bool = False) -> bool:
     """
     在 repo_dir 中依次尝试使用多种命令应用补丁。
     成功则打印中文提示并返回 True，否则打印失败提示并返回 False。
     """
+    print(f"正在应用补丁：{patch_content[:50]}...")  # 打印补丁的前50个字符以便调试
     repo_dir = Path(repo_dir)
     if not repo_dir.is_dir():
         raise FileNotFoundError(f"仓库目录未找到: {repo_dir}")
 
+    # 虚拟环境路径
+    env_dir = Path(ENV_BASE_DIR) / uv_env_name
     if not env_dir.exists():
         raise FileNotFoundError(f"虚拟环境未找到: {env_dir}")
 
@@ -77,13 +75,20 @@ def apply_patch_to_repo(
                 action = '还原' if reverse else '应用'
                 print(f"补丁{action}成功：{cmd}")
                 return True
-        print("补丁应用失败：所有尝试均未成功。")
-        return False
+            else:
+                # 打印错误信息
+                print(f"补丁应用失败，错误信息：\n{result.stderr}")
+                print(f"补丁应用失败：{result.stdout}")
     finally:
+        # 清理临时文件
         try:
             temp_file.unlink()
         except Exception:
             pass
+
+    print("补丁应用失败：所有尝试均未成功。")
+    return False
+
 
 # 脚本独立调用支持
 if __name__ == '__main__':
