@@ -1,13 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-run_eval.py — 主控程序：
-负责整个本地验证流程的编排，依次调用以下模块：
-  1. uv_env.py —— 环境准备
-  2. ap.py     —— 补丁应用
-  3. test.py   —— 测试运行与验证
-
-脚本顶部通过常量配置相对路径，无需命令行参数。
+run_eval.py — 主控程序（只运行 FAIL_TO_PASS 测试）
 """
 from pathlib import Path
 import json
@@ -59,6 +53,16 @@ def restore_to_commit(repo_dir: Path, commit: str) -> None:
     subprocess.run(["git", "reset", "--hard", commit], cwd=repo_dir, check=True)
     subprocess.run(["git", "checkout", commit], cwd=repo_dir, check=True)
 
+def parse_test_list(raw) -> list[str]:
+    if isinstance(raw, str):
+        s = raw.strip()
+        if s.startswith('[') and s.endswith(']'):
+            s = s[1:-1]
+        return [t.strip() for t in s.split(',') if t.strip()]
+    elif isinstance(raw, (list, tuple)):
+        return list(raw)
+    return []
+
 def main():
     repo_dir = None
     try:
@@ -87,15 +91,25 @@ def main():
         error_patch = item['patch']
         if not apply_patch_to_repo(repo_dir, error_patch, env_dir, reverse=False):
             raise RuntimeError('注入错误补丁失败')
+        print("✅ 错误补丁已成功应用。")
 
-        print("错误补丁已成功应用，测试部分暂未执行。")
+        # 8. 运行 FAIL_TO_PASS 测试
+        fail_tests = parse_test_list(item.get('FAIL_TO_PASS', []))
+        fail_results = run_tests_on_repo(repo_dir, fail_tests, expect_fail=True, env_dir=env_dir)
+
+        # 9. 输出结果
+        print("\n🎯 FAIL_TO_PASS 测试结果：")
+        print(json.dumps(fail_results, indent=2, ensure_ascii=False))
+
+        # 判断是否全部失败（符合预期）
+        ok = all(fail_results.get(t, False) for t in fail_tests)
+        sys.exit(0 if ok else 1)
 
     except Exception as e:
         print(f'❌ Error: {e}', file=sys.stderr)
         sys.exit(1)
 
     finally:
-        # 🧹 最后一定要恢复仓库
         if repo_dir is not None:
             try:
                 restore_to_commit(repo_dir, original_commit)
