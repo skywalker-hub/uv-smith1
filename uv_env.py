@@ -47,7 +47,9 @@ def setup_environment(uv_env_name: str) -> Path:
     try:
         if REQ_FILE_PATH.exists():
             subprocess.run(["uv", "pip", "install", "-r", str(REQ_FILE_PATH)], check=True)
-        
+            print("成功安装requirements")
+        #else:
+            #subprocess.run(["uv", "pip", "install", "pytest"], check=True)
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"依赖安装失败（{REQ_FILE_PATH}）: {e}")
 
