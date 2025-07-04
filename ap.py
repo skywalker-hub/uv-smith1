@@ -36,7 +36,7 @@ GIT_APPLY_COMMANDS = [
     "patch --batch --fuzz=5 -p1 -i"
 ]
 
-def apply_patch_to_repo(repo_dir: Path, patch_content: str,  reverse: bool = False) -> bool:
+def apply_patch_to_repo(repo_dir: Path, patch_content: str,env_dir, reverse: bool = False) -> bool:
     """
     在 repo_dir 中依次尝试使用多种命令应用补丁。
     成功则打印中文提示并返回 True，否则打印失败提示并返回 False。

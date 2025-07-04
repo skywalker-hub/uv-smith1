@@ -96,7 +96,7 @@ def main():
 
         # 6. 注入错误补丁
         error_patch = item['patch']
-        if not apply_patch_to_repo(repo_dir, error_patch, reverse=False):
+        if not apply_patch_to_repo(repo_dir, error_patch,env_dir, reverse=False):
             raise RuntimeError('注入错误补丁失败')
 
         print("错误补丁已成功应用，测试部分暂未执行。")
