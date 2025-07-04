@@ -47,11 +47,24 @@ def extract_base_commit(instance_id: str) -> str:
 
 def switch_to_commit(repo_dir: Path, base_commit: str) -> None:
     """
-    切换到指定的 commit
+    切换到指定的 commit，并暂存当前更改以防丢失
     """
     print(f"切换到 base commit: {base_commit}")
-    subprocess.run(["git", "reset", "--hard", base_commit], cwd=repo_dir, check=True)  # 重置当前工作区
-    subprocess.run(["git", "checkout", base_commit], cwd=repo_dir, check=True)  # 切换到 commit
+
+    # 1. 暂存当前工作区的更改，包括未追踪的文件
+    subprocess.run(["git", "stash", "--include-untracked"], cwd=repo_dir, check=False)
+
+    # 2. 重置当前工作区
+    subprocess.run(["git", "reset", "--hard", base_commit], cwd=repo_dir, check=True)
+
+    # 3. 切换到指定的 commit
+    subprocess.run(["git", "checkout", base_commit], cwd=repo_dir, check=True)
+
+    print(f"仓库已切换到 commit: {base_commit}")
+
+    # 4. 恢复暂存的更改
+    subprocess.run(["git", "stash", "pop"], cwd=repo_dir, check=False)
+
 
 def main():
     try:
