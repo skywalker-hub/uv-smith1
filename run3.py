@@ -99,10 +99,7 @@ def main():
 
         # 9. 运行 PASS_TO_PASS（应通过）
         pass_tests = parse_test_list(item.get('PASS_TO_PASS', []))
-        
-        # 只取前10个测试用例并去除[]格式
-        pass_tests = [test.replace('[', '').replace(']', '') for test in pass_tests[:5]]
-
+        pass_tests = pass_tests[:5]
         pass_results = run_tests_on_repo(repo_dir, pass_tests, expect_fail=False, env_dir=env_dir)
 
         # 10. 输出结果
