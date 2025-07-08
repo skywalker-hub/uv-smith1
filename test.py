@@ -56,7 +56,7 @@ def run_tests_on_repo(
         log_file = log_dir / f"{nodeid.replace('::', '__').replace('[','_').replace(']','')}.log"
         log_file.parent.mkdir(parents=True, exist_ok=True)  # 创建日志目录（如果不存在）
 
-        cmd = f"~/autodl-tmp/uv-smith1/env/pptx/bin/python -m pytest -q --disable-warnings --maxfail=1 tests/chart/test_axis.py::{nodeid}"
+        cmd = f"source ~/autodl-tmp/uv-smith1/{env_dir}/bin/activate && pytest -q --disable-warnings --maxfail=1 {nodeid}"
         print(f"🎯 执行命令：{cmd}")  # 显示当前运行的命令
 
         try:
